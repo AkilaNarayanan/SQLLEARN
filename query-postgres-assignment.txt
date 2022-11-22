@@ -1,0 +1,61 @@
+create table studentlist (roll_number integer,	student_name varchar(50),	class char, section	 char, school_name
+varchar(50)						  
+);
+
+ \COPY studentlist FROM 'C:\Users\akila\Downloads\Dataset_n_Scripts\student_list.csv' csv header;
+
+
+create table studentlist (roll_number integer,	student_name varchar(50),	class char, section	 char, school_name
+varchar(50)						  
+);
+
+ \COPY studentlist FROM 'C:\Users\akila\Downloads\Dataset_n_Scripts\student_list.csv' csv header;
+
+
+create table question_paper_code (paper_code integer,	class varchar(10),	subject
+varchar(20));
+
+ \COPY question_paper_code FROM 'C:\Users\akila\Downloads\Dataset_n_Scripts\question_paper_code.csv' csv header;
+
+
+create table correct_answer (question_paper_code integer,	question_number	varchar(20), correct_option
+varchar(20));
+
+ \COPY correct_answer FROM 'C:\Users\akila\Downloads\Dataset_n_Scripts\correct_answer.csv' csv header;
+
+
+select sl.roll_number,sl.student_name,sl.class,sl.section,sl.school_name
+from studentlist sl 
+join student_response sr on sl.roll_number=sr.roll_number
+join question_paper_code qc on qc.paper_code=sr.question_paper_code 
+join correct_answer ca on ca.question_paper_code=sr.question_paper_code and ca.question_number=sr.question_number
+where sl.roll_number=10114;
+
+
+select sl.roll_number,sl.student_name,sl.class,sl.section,sl.school_name
+from studentlist sl 
+join student_response sr on sr.roll_number=sl.roll_number
+join correct_answer ca on sr.question_paper_code::integer = ca.question_paper_code and sr.question_number=ca.question_number
+--join correct_answer ca on sr.question_paper_code = ca.question_paper_code and sr.question_number = ca.question_number
+
+join question_paper_code qc on qc.paper_code=ca.question_paper_code 
+where sl.roll_number=10114;
+
+
+
+
+
+
+with ctesum as (
+select sl.roll_number,sl.student_name,sl.class,sl.section,sl.school_name,
+sum (case when qc.subject='Math' and sr.option_marked<>'e' and sr.option_marked=ca.correct_option then 1 else 0 end) as correct,
+sum (case when qc.subject='Math' and sr.option_marked<>'e' and sr.option_marked != ca.correct_option then 1 else 0 end) as wrong,
+sum (case when qc.subject='Math' and sr.option_marked='e' then 1 else 0 end) as yet_To_learn,
+sum (case when qc.subject='Math' and sr.option_marked<>'e' then 1 else 0 end) as total
+from studentlist sl 
+join student_response sr on sr.roll_number=sl.roll_number
+join correct_answer ca on sr.question_paper_code::integer = ca.question_paper_code and sr.question_number=ca.question_number
+--join correct_answer ca on sr.question_paper_code = ca.question_paper_code and sr.question_number = ca.question_number
+join question_paper_code qc on qc.paper_code=ca.question_paper_code 
+where sl.roll_number=10114 group by sl.roll_number,sl.student_name,sl.class,sl.section,sl.school_name )
+select roll_number,student_name,class,section,school_name,correct,wrong,yet_To_learn,concat(round(((correct::decimal/total::decimal)*100),2),'%') as cp from ctesum; 
