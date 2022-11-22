@@ -1,0 +1,39 @@
+drop table account_balance;
+create table account_balance
+(
+    account_no          varchar(20),
+    transaction_date    date,
+    debit_credit        varchar(10),
+    transaction_amount  decimal
+);
+
+insert into account_balance values ('acc_1', to_date('2022-01-20', 'YYYY-MM-DD'), 'credit', 100);
+insert into account_balance values ('acc_1', to_date('2022-01-21', 'YYYY-MM-DD'), 'credit', 500);
+insert into account_balance values ('acc_1', to_date('2022-01-22', 'YYYY-MM-DD'), 'credit', 300);
+insert into account_balance values ('acc_1', to_date('2022-01-23', 'YYYY-MM-DD'), 'credit', 200);
+insert into account_balance values ('acc_2', to_date('2022-01-20', 'YYYY-MM-DD'), 'credit', 500);
+insert into account_balance values ('acc_2', to_date('2022-01-21', 'YYYY-MM-DD'), 'credit', 1100);
+insert into account_balance values ('acc_2', to_date('2022-01-22', 'YYYY-MM-DD'), 'debit', 1000);
+insert into account_balance values ('acc_3', to_date('2022-01-20', 'YYYY-MM-DD'), 'credit', 1000);
+insert into account_balance values ('acc_4', to_date('2022-01-20', 'YYYY-MM-DD'), 'credit', 1500);
+insert into account_balance values ('acc_4', to_date('2022-01-21', 'YYYY-MM-DD'), 'debit', 500);
+insert into account_balance values ('acc_5', to_date('2022-01-20', 'YYYY-MM-DD'), 'credit', 900);
+
+select * from account_balance;
+
+select * from account_balance;
+
+with cte1 as (
+select account_no, transaction_date,
+(case when debit_credit='debit' then transaction_amount*-1 else transaction_amount end) as transaction
+from account_balance),
+cte2 as (select account_no, transaction_date,transaction 
+		,sum(transaction) over (partition by account_no rows between unbounded preceding and unbounded following  ) as ind_sum 
+
+	,sum(transaction) over (partition by account_no order by transaction_date) as summarize 
+	from cte1 )
+	select account_no, min(transaction_date)  from cte2 where ind_sum>=1000
+	and summarize>=1000 group by account_no;
+	
+		
+insert into account_balance values ('acc_2', to_date('2022-01-27', 'YYYY-MM-DD'), 'credit', 900);
